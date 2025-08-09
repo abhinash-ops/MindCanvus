@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { ArrowLeft } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
 
 const EditPost = () => {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [post, setPost] = useState(null)
   const [content, setContent] = useState('')
@@ -27,6 +29,14 @@ const EditPost = () => {
     try {
       const response = await api.get(`/posts/${id}`)
       const postData = response.data.post
+      
+      // Check if user is the author of the post
+      if (user && postData.author._id !== user._id) {
+        toast.error('You are not authorized to edit this post')
+        navigate('/posts')
+        return
+      }
+      
       setPost(postData)
       setContent(postData.content)
       

@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { format } from 'date-fns'
-import { Eye, Heart, MessageCircle, Share, Send, X } from 'lucide-react'
+import { Eye, Heart, MessageCircle, Share, Send, X, Edit, Trash2 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
 
 const PostDetail = () => {
   const { id } = useParams()
+  const navigate = useNavigate()
   const { user } = useAuth()
   const [post, setPost] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -16,6 +17,8 @@ const PostDetail = () => {
   const [newComment, setNewComment] = useState('')
   const [showCommentForm, setShowCommentForm] = useState(false)
   const [commentLoading, setCommentLoading] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   useEffect(() => {
     fetchPost()
@@ -112,6 +115,24 @@ const PostDetail = () => {
     }
   }
 
+  const handleDelete = async () => {
+    setDeleteLoading(true)
+    try {
+      await api.delete(`/posts/${id}`)
+      toast.success('Post deleted successfully!')
+      navigate('/posts')
+    } catch (error) {
+      console.error('Error deleting post:', error)
+      toast.error('Failed to delete post')
+    } finally {
+      setDeleteLoading(false)
+      setShowDeleteModal(false)
+    }
+  }
+
+  // Check if current user is the author of the post
+  const isAuthor = user && post && post.author._id === user._id
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -170,18 +191,40 @@ const PostDetail = () => {
               </div>
             </div>
             
-            <div className="flex items-center space-x-6 text-sm text-gray-500">
-              <div className="flex items-center space-x-1">
-                <Eye className="w-4 h-4" />
-                <span>{post.views} views</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <Heart className="w-4 h-4" />
-                <span>{post.likesCount} likes</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <MessageCircle className="w-4 h-4" />
-                <span>{post.commentsCount || 0} comments</span>
+            <div className="flex items-center space-x-6">
+              {/* Edit/Delete buttons for post author */}
+              {isAuthor && (
+                <div className="flex items-center space-x-2">
+                  <Link
+                    to={`/edit-post/${post._id}`}
+                    className="flex items-center space-x-1 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <Edit className="w-4 h-4" />
+                    <span>Edit</span>
+                  </Link>
+                  <button
+                    onClick={() => setShowDeleteModal(true)}
+                    className="flex items-center space-x-1 px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete</span>
+                  </button>
+                </div>
+              )}
+              
+              <div className="flex items-center space-x-6 text-sm text-gray-500">
+                <div className="flex items-center space-x-1">
+                  <Eye className="w-4 h-4" />
+                  <span>{post.views} views</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Heart className="w-4 h-4" />
+                  <span>{post.likesCount} likes</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <MessageCircle className="w-4 h-4" />
+                  <span>{post.commentsCount || 0} comments</span>
+                </div>
               </div>
             </div>
           </div>
@@ -330,6 +373,41 @@ const PostDetail = () => {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <Trash2 className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mt-4">Delete Post</h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  Are you sure you want to delete this post? This action cannot be undone.
+                </p>
+              </div>
+              <div className="flex justify-center space-x-4 mt-4">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                  disabled={deleteLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteLoading}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {deleteLoading ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

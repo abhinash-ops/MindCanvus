@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { Search, Filter, Eye, Heart, MessageCircle, Calendar, User } from 'lucide-react'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
+import { Search, Filter, Eye, Heart, MessageCircle, Calendar, User, Edit, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
+import { useAuth } from '../../contexts/AuthContext'
 import api from '../../utils/api'
+import toast from 'react-hot-toast'
 
 const Posts = () => {
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const [posts, setPosts] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -19,6 +23,11 @@ const Posts = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalPosts, setTotalPosts] = useState(0)
+  
+  // Delete modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [postToDelete, setPostToDelete] = useState(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   useEffect(() => {
     fetchPosts()
@@ -92,6 +101,30 @@ const Posts = () => {
   const handlePageChange = (page) => {
     setCurrentPage(page)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleDeletePost = async () => {
+    if (!postToDelete) return
+    
+    setDeleteLoading(true)
+    try {
+      await api.delete(`/posts/${postToDelete._id}`)
+      toast.success('Post deleted successfully!')
+      // Refresh posts list
+      fetchPosts()
+    } catch (error) {
+      console.error('Error deleting post:', error)
+      toast.error('Failed to delete post')
+    } finally {
+      setDeleteLoading(false)
+      setShowDeleteModal(false)
+      setPostToDelete(null)
+    }
+  }
+
+  const openDeleteModal = (post) => {
+    setPostToDelete(post)
+    setShowDeleteModal(true)
   }
 
   if (loading && posts.length === 0) {
@@ -289,6 +322,26 @@ const Posts = () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* Edit/Delete buttons for post author */}
+                    {user && post.author._id === user._id && (
+                      <div className="mt-4 pt-4 border-t border-gray-200 flex items-center space-x-2">
+                        <Link
+                          to={`/edit-post/${post._id}`}
+                          className="flex items-center space-x-1 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                        >
+                          <Edit className="w-3 h-3" />
+                          <span>Edit</span>
+                        </Link>
+                        <button
+                          onClick={() => openDeleteModal(post)}
+                          className="flex items-center space-x-1 px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </article>
               ))}
@@ -333,6 +386,44 @@ const Posts = () => {
           </>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && postToDelete && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <Trash2 className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mt-4">Delete Post</h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500 mb-2">
+                  Are you sure you want to delete "{postToDelete.title}"?
+                </p>
+                <p className="text-sm text-gray-500">
+                  This action cannot be undone.
+                </p>
+              </div>
+              <div className="flex justify-center space-x-4 mt-4">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                  disabled={deleteLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeletePost}
+                  disabled={deleteLoading}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {deleteLoading ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
