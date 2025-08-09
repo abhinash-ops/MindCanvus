@@ -89,7 +89,7 @@ A full-featured blog and social publishing platform inspired by WordPress, desig
    NODE_ENV=development
    PORT=5000
    MONGODB_URI=mongodb://localhost:27017/mindcanvus
-   JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+   JWT_SECRET=your own key
    JWT_EXPIRE=30d
    ```
 

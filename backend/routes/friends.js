@@ -34,6 +34,8 @@ router.post('/request/:userId', protect, async (req, res) => {
       request => request.from.toString() === req.user._id.toString()
     );
 
+    
+
     if (existingRequest) {
       console.log(`Error: Friend request already exists from ${req.user._id} to ${req.params.userId}`);
       return res.status(400).json({ message: 'Friend request already sent' });
