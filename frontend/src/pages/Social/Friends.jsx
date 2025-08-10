@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Users, UserPlus, UserCheck, UserX, Mail } from 'lucide-react'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
 
 const Friends = () => {
+  const navigate = useNavigate()
   const [friends, setFriends] = useState([])
   const [requests, setRequests] = useState([])
   const [suggestions, setSuggestions] = useState([])
@@ -20,12 +22,13 @@ const Friends = () => {
 
   const fetchFriendsData = async () => {
     try {
+      console.log('Fetching friends data...')
       setError(null) // Clear any previous errors
       const [friendsResponse, requestsResponse, suggestionsResponse, sentRequestsResponse] = await Promise.all([
-        api.get('/friends'),
-        api.get('/friends/requests'),
-        api.get('/friends/suggestions'),
-        api.get('/friends/requests/sent')
+        api.get('/api/friends'),
+        api.get('/api/friends/requests'),
+        api.get('/api/friends/suggestions'),
+        api.get('/api/friends/requests/sent')
       ])
       
       console.log('Raw API responses:', {
@@ -66,7 +69,7 @@ const Friends = () => {
     try {
       setProcessingRequest(userId)
       console.log(`Accepting friend request from user: ${userId}`)
-      const response = await api.put(`/friends/accept/${userId}`)
+      const response = await api.put(`/api/friends/accept/${userId}`)
       console.log('Accept friend request response:', response.data)
       fetchFriendsData()
       toast.success('Friend request accepted!')
@@ -86,7 +89,7 @@ const Friends = () => {
     try {
       setProcessingRequest(userId)
       console.log(`Rejecting friend request from user: ${userId}`)
-      const response = await api.put(`/friends/reject/${userId}`)
+      const response = await api.put(`/api/friends/reject/${userId}`)
       console.log('Reject friend request response:', response.data)
       fetchFriendsData()
       toast.success('Friend request rejected')
@@ -105,7 +108,8 @@ const Friends = () => {
     
     try {
       setSendingRequest(userId)
-      const response = await api.post(`/friends/request/${userId}`)
+      console.log(`Sending friend request to user: ${userId}`)
+      const response = await api.post(`/api/friends/request/${userId}`)
       console.log('Friend request response:', response.data)
       fetchFriendsData()
       toast.success('Friend request sent!')
@@ -121,11 +125,13 @@ const Friends = () => {
 
   const handleRemoveFriend = async (userId) => {
     try {
-      await api.delete(`/friends/${userId}`)
+      console.log(`Removing friend: ${userId}`)
+      await api.delete(`/api/friends/${userId}`)
       fetchFriendsData()
       toast.success('Friend removed')
     } catch (error) {
       console.error('Error removing friend:', error)
+      console.error('Error details:', error.response?.data || error.message)
       toast.error('Failed to remove friend')
     }
   }
@@ -225,7 +231,10 @@ const Friends = () => {
                       </div>
                     </div>
                     <div className="mt-4 flex space-x-2">
-                      <button className="flex-1 btn btn-outline text-sm">
+                      <button 
+                        onClick={() => navigate(`/messages/${friend._id}`)}
+                        className="flex-1 btn btn-outline text-sm"
+                      >
                         <Mail className="w-4 h-4 mr-1" />
                         Message
                       </button>

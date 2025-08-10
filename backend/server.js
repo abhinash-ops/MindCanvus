@@ -11,6 +11,7 @@ const postRoutes = require('./routes/posts');
 const userRoutes = require('./routes/users');
 const friendRoutes = require('./routes/friends');
 const commentRoutes = require('./routes/comments');
+const messageRoutes = require('./routes/messages');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -46,6 +47,7 @@ app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/comments', commentRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
