@@ -4,11 +4,19 @@ import { useForm } from 'react-hook-form'
 import { ArrowLeft } from 'lucide-react'
 import api from '../../utils/api'
 import toast from 'react-hot-toast'
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { useRef } from 'react';
 
 const CreatePost = () => {
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
   const [content, setContent] = useState('')
+  const [scheduledFor, setScheduledFor] = useState(null);
+  const [featuredImageUrl, setFeaturedImageUrl] = useState("");
+  const [featuredImageInput, setFeaturedImageInput] = useState("");
+  const [imageError, setImageError] = useState(false);
+  const fileInputRef = useRef();
 
   const {
     register,
@@ -16,25 +24,54 @@ const CreatePost = () => {
     formState: { errors }
   } = useForm()
 
-  const onSubmit = async (data) => {
-    setIsLoading(true)
+  const backendBaseUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('image', file);
+    setIsLoading(true);
     try {
-      const postData = {
+      const res = await api.post('/posts/upload-image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      let imageUrl = res.data.imageUrl;
+      if (!imageUrl.startsWith('http')) {
+        imageUrl = backendBaseUrl + imageUrl;
+      }
+      setFeaturedImageUrl(imageUrl);
+      setFeaturedImageInput(""); // Clear manual input if file uploaded
+      toast.success('Image uploaded!');
+    } catch (err) {
+      toast.error('Image upload failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onSubmit = async (data) => {
+    setIsLoading(true);
+    try {
+      let postData = {
         ...data,
         content,
-        status: data.status || 'draft'
+        status: data.status || 'draft',
+        featuredImage: featuredImageUrl || featuredImageInput || data.featuredImage,
+      };
+      if (data.status === 'scheduled' && scheduledFor) {
+        postData.scheduledFor = scheduledFor.toISOString();
       }
-
-      await api.post('/posts', postData)
-      toast.success('Post created successfully!')
-      navigate('/dashboard')
+      await api.post('/posts', postData);
+      toast.success('Post created successfully!');
+      navigate('/dashboard');
     } catch (error) {
-      console.error('Error creating post:', error)
-      toast.error('Failed to create post')
+      console.error('Error creating post:', error);
+      toast.error('Failed to create post');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -125,15 +162,45 @@ const CreatePost = () => {
 
           <div className="mt-6">
             <label htmlFor="featuredImage" className="block text-sm font-medium text-gray-700 mb-2">
-              Featured Image URL
+              Featured Image (URL or Upload)
             </label>
             <input
               id="featuredImage"
               type="url"
-              {...register('featuredImage')}
-              className="input"
+              className="input mb-2"
               placeholder="https://example.com/image.jpg"
+              value={featuredImageInput}
+              onChange={e => {
+                setFeaturedImageInput(e.target.value);
+                setFeaturedImageUrl(""); // Clear file upload if user types URL
+              }}
+              disabled={isLoading}
             />
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="input"
+                disabled={isLoading}
+              />
+              {(featuredImageUrl || featuredImageInput) && (
+                <div>
+                  <img
+                    src={featuredImageUrl || featuredImageInput}
+                    alt="Preview"
+                    className="h-12 w-12 object-cover rounded"
+                    onError={() => setImageError(true)}
+                    onLoad={() => setImageError(false)}
+                  />
+                  <div className="text-xs text-gray-500 break-all">URL: {featuredImageUrl || featuredImageInput}</div>
+                  {imageError && (
+                    <div className="text-xs text-red-600">Image failed to load. Check the URL above and backend server.</div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="mt-6">
@@ -144,11 +211,33 @@ const CreatePost = () => {
               id="status"
               {...register('status')}
               className="input"
+              onChange={e => {
+                if (e.target.value !== 'scheduled') setScheduledFor(null);
+              }}
             >
               <option value="draft">Draft</option>
               <option value="published">Published</option>
+              <option value="scheduled">Scheduled</option>
             </select>
           </div>
+          {(typeof (window) !== 'undefined' && (document.getElementById('status')?.value === 'scheduled' || scheduledFor)) && (
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Schedule for (date & time)
+              </label>
+              <DatePicker
+                selected={scheduledFor}
+                onChange={date => setScheduledFor(date)}
+                showTimeSelect
+                timeFormat="HH:mm"
+                timeIntervals={1}
+                dateFormat="yyyy-MM-dd HH:mm"
+                minDate={new Date()}
+                className="input"
+                placeholderText="Select date and time"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end space-x-4">
