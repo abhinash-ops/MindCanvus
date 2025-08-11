@@ -3,6 +3,20 @@ const { body, validationResult } = require('express-validator');
 const Post = require('../models/Post');
 const Comment = require('../models/Comment');
 const { protect, authorize } = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
+
+// Multer storage config
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '../uploads'));
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname.replace(/\s+/g, '_'));
+  }
+});
+const upload = multer({ storage });
 
 const router = express.Router();
 
@@ -329,6 +343,17 @@ router.post('/:id/share', protect, async (req, res) => {
     console.error('Share post error:', error);
     res.status(500).json({ message: 'Server error' });
   }
+});
+
+// @desc    Upload image
+// @route   POST /api/posts/upload-image
+// @access  Private
+router.post('/upload-image', protect, upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
+  const imageUrl = `/uploads/${req.file.filename}`;
+  res.status(201).json({ success: true, imageUrl });
 });
 
 // @desc    Get user's posts

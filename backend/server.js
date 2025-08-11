@@ -4,6 +4,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const cron = require('node-cron');
+const Post = require('./models/Post');
 require('dotenv').config({ path: './config.env' });
 
 const authRoutes = require('./routes/auth');
@@ -46,6 +48,7 @@ app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/comments', commentRoutes);
+app.use('/uploads', express.static('uploads'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -70,6 +73,20 @@ app.use('*', (req, res) => {
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('Connected to MongoDB');
+    // Start the scheduler after DB connection
+    cron.schedule('* * * * *', async () => {
+      try {
+        const postsToPublish = await Post.getScheduledPostsToPublish();
+        for (const post of postsToPublish) {
+          post.status = 'published';
+          post.publishedAt = new Date();
+          await post.save();
+          console.log(`Published scheduled post: ${post._id}`);
+        }
+      } catch (err) {
+        console.error('Error in scheduled post publisher:', err);
+      }
+    });
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });

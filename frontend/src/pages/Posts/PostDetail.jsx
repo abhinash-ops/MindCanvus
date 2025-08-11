@@ -152,6 +152,8 @@ const PostDetail = () => {
     )
   }
 
+  const backendBaseUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <article className="card p-8">
@@ -234,7 +236,7 @@ const PostDetail = () => {
         {post.featuredImage && (
           <div className="mb-8">
             <img
-              src={post.featuredImage}
+              src={post.featuredImage.startsWith('http') ? post.featuredImage : backendBaseUrl + post.featuredImage}
               alt={post.title}
               className="w-full h-64 md:h-96 object-cover rounded-lg"
             />
