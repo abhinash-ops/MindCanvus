@@ -18,10 +18,13 @@ const Home = () => {
 
   const fetchPosts = async () => {
     try {
-      const response = await api.get('/posts?limit=6')
+      console.log('Fetching posts...')
+      const response = await api.get('/api/posts?limit=6')
+      console.log('Posts response:', response.data)
       setPosts(response.data.posts)
     } catch (error) {
       console.error('Error fetching posts:', error)
+      console.error('Error details:', error.response?.data || error.message)
     } finally {
       setLoading(false)
     }
@@ -29,10 +32,13 @@ const Home = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await api.get('/posts/categories')
+      console.log('Fetching categories...')
+      const response = await api.get('/api/posts/categories')
+      console.log('Categories response:', response.data)
       setCategories(response.data.categories)
     } catch (error) {
       console.error('Error fetching categories:', error)
+      console.error('Error details:', error.response?.data || error.message)
     }
   }
 

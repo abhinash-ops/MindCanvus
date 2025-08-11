@@ -12,6 +12,7 @@ import PostDetail from './pages/Posts/PostDetail'
 import Profile from './pages/Profile/Profile'
 import UserProfile from './pages/Profile/UserProfile'
 import Friends from './pages/Social/Friends'
+import Messages from './pages/Social/Messages'
 import Search from './pages/Search'
 import ProtectedRoute from './components/Auth/ProtectedRoute'
 
@@ -55,6 +56,16 @@ function App() {
           <Route path="friends" element={
             <ProtectedRoute>
               <Friends />
+            </ProtectedRoute>
+          } />
+          <Route path="messages" element={
+            <ProtectedRoute>
+              <Messages />
+            </ProtectedRoute>
+          } />
+          <Route path="messages/:userId" element={
+            <ProtectedRoute>
+              <Messages />
             </ProtectedRoute>
           } />
         </Route>

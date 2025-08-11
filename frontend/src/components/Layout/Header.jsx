@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import { Search, Menu, X, User, LogOut, Plus, Home, Users, FileText } from 'lucide-react'
+import { useMessages } from '../../contexts/MessageContext'
+import { Search, Menu, X, User, LogOut, Plus, Home, Users, FileText, Mail } from 'lucide-react'
 
 const Header = () => {
   const { user, logout } = useAuth()
+  const { unreadCount } = useMessages()
   const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -71,6 +73,15 @@ const Header = () => {
                 <Link to="/friends" className="flex items-center space-x-1 px-3 py-2 rounded-lg text-gray-600 hover:text-gray-900">
                   <Users className="w-4 h-4" />
                   <span>Friends</span>
+                </Link>
+                <Link to="/messages" className="flex items-center space-x-1 px-3 py-2 rounded-lg text-gray-600 hover:text-gray-900 relative">
+                  <Mail className="w-4 h-4" />
+                  <span>Messages</span>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
                 </Link>
               </>
             )}
@@ -149,6 +160,14 @@ const Header = () => {
                   </Link>
                   <Link to="/friends" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg" onClick={() => setIsMenuOpen(false)}>
                     Friends
+                  </Link>
+                  <Link to="/messages" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg relative" onClick={() => setIsMenuOpen(false)}>
+                    Messages
+                    {unreadCount > 0 && (
+                      <span className="absolute top-2 right-4 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
                   </Link>
                   <Link to="/profile" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg" onClick={() => setIsMenuOpen(false)}>
                     Profile

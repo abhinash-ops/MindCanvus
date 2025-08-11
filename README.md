@@ -74,17 +74,7 @@ A full-featured blog and social publishing platform inspired by WordPress, desig
    npm install
    ```
 
-3. **Environment Setup**
-   ```bash
-   # Copy environment file
-   cd ../backend
-   cp config.env.example config.env
-   
-   # Edit the environment variables
-   nano config.env
-   ```
-
-   Update the following variables in `backend/config.env`:
+3. Update the following variables in `backend/config.env`:
    ```env
    NODE_ENV=development
    PORT=5000
@@ -102,6 +92,7 @@ A full-featured blog and social publishing platform inspired by WordPress, desig
 5. **Run the application**
    ```bash
    # From the root directory
+   cd frontend
    npm run dev
    ```
 
@@ -111,23 +102,11 @@ A full-featured blog and social publishing platform inspired by WordPress, desig
 
 ### Development Mode
 ```bash
-# Run both frontend and backend
+# Run both frontend 
 npm run dev
 
 # Run only backend
-npm run server
-
-# Run only frontend
-npm run client
-```
-
-### Production Mode
-```bash
-# Build frontend
-npm run build
-
-# Start production server
-npm start
+nodemon server.js
 ```
 
 ## 📁 Project Structure
@@ -227,7 +206,6 @@ mindcanvus/
 - Input validation and sanitization
 - Rate limiting
 - CORS configuration
-- Security headers with helmet
 - Protected routes
 
 ## 🚀 Deployment
@@ -248,10 +226,6 @@ mindcanvus/
 3. Commit your changes: `git commit -am 'Add feature'`
 4. Push to the branch: `git push origin feature-name`
 5. Submit a pull request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🆘 Support
 

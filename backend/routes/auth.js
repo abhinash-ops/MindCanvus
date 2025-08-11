@@ -140,6 +140,10 @@ router.get('/me', protect, async (req, res) => {
       .populate('following', 'username firstName lastName avatar')
       .populate('friends', 'username firstName lastName avatar');
 
+    // Update last active timestamp
+    user.lastActive = new Date();
+    await user.save();
+
     res.json({
       success: true,
       user: user.getPublicProfile()
@@ -147,6 +151,29 @@ router.get('/me', protect, async (req, res) => {
   } catch (error) {
     console.error('Get profile error:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @desc    Refresh user token
+// @route   POST /api/auth/refresh
+// @access  Private
+router.post('/refresh', protect, async (req, res) => {
+  try {
+    // Generate a new token
+    const token = generateToken(req.user._id);
+    
+    // Update last active timestamp
+    const user = await User.findById(req.user._id);
+    user.lastActive = new Date();
+    await user.save();
+
+    res.json({
+      success: true,
+      token
+    });
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    res.status(500).json({ message: 'Server error during token refresh' });
   }
 });
 
